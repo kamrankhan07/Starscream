@@ -121,10 +121,8 @@ public class ServerConnection: Connection, HTTPServerDelegate, FramerEventClient
         switch state {
         case .connected:
             break
-        case .waiting:
-            break
-        case .failed(let error):
-            print("server connection error: \(error ?? WSError(type: .protocolError, message: "default error, no extra data", code: 0))") //handleError(error)
+        case .waiting(let error), .failed(let error):
+            print("server connection error: \(error ?? WSError(type: .protocolError, message: "default error, no extra data", code: 0))")
         case .viability(_):
             break
         case .shouldReconnect(_):
