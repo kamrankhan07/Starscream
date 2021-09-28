@@ -77,7 +77,7 @@ extension FoundationSecurity: CertificatePinning {
 extension FoundationSecurity: HeaderValidator {
     public func validate(headers: [String: String], key: String) -> Error? {
         if let acceptKey = headers[HTTPWSHeader.acceptName] {
-            let sha = "\(key)258EAFA5-E914-47DA-95CA-C5AB0DC85B11".sha512Base64()
+            let sha = "\(key)258EAFA5-E914-47DA-95CA-C5AB0DC85B11".sha1Base64()
             if sha != acceptKey {
                 return WSError(type: .securityError, message: "accept header doesn't match", code: SecurityErrorCode.acceptFailed.rawValue)
             }
@@ -87,19 +87,13 @@ extension FoundationSecurity: HeaderValidator {
 }
 
 private extension String {
-    func sha512Base64() -> String {
-        let data = self.data(using: String.Encoding.utf8)!
-        
-        let digest: [UInt8] = data.withUnsafeBytes {
-            guard let bytes = $0.baseAddress?.assumingMemoryBound(to: UInt8.self) else {
-                return [UInt8]()
-            }
-            
+    func sha1Base64() -> String {
+        let data = self.data(using: .utf8)!
+        let pointer = data.withUnsafeBytes { (bytes: UnsafeRawBufferPointer) -> [UInt8] in
             var digest = [UInt8](repeating: 0, count:Int(CC_SHA1_DIGEST_LENGTH))
-            CC_SHA512(bytes, CC_LONG(data.count), &digest)
+            CC_SHA1(bytes.baseAddress, CC_LONG(data.count), &digest)
             return digest
         }
-        
-        return Data(digest).base64EncodedString()
+        return Data(pointer).base64EncodedString()
     }
 }
